@@ -1,6 +1,11 @@
 import os
 import csv
-
+# 该文件用于计算你的预测答案和标答（csv）的差距，即准确率评测。
+# 大家只要改一下csv的名字就好了，调用时直接getscore(src_file,test_file)即可，给详细路径也行，给相对路径也行，随你便
+# 另外，文件来自新哥
+# 运行后就是下面这个样子：
+# C:\ProgramData\Anaconda3\python.exe F:/python/getscore.py
+# {'right': 7550, 'wrong': 450, 'not_find': 0} 0.94375
 
 # 计分器
 class scoring_one(object):
