@@ -21,4 +21,5 @@ This repository is used to store new wheel
 ### 参考资料
 | 文件名 | 内容描述 | 参考资料创建时间 |
 | ------ | :------: | ------ |
+| predict.py | 根据你的Keras模型和测试集来生成你的预测csv | 2018-11-26 |
 
