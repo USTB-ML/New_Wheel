@@ -2,11 +2,11 @@
 初赛题的多标签解决方法，该方法已知最高能实现94.375%的准确率
 请注意你们的TFrecords的读取，有问题的话可以换成其他的方法，目前还有点玄学
 如果你们内存/显存不够了，可以减小batch_size试试，还不行就压缩图片大小到64*64
-另外注意binary_crossentropy和categorical_crossentropy的区别，目前还不确定哪个更好
-categorical_crossentropy相对稳定，binary_crossentropy可能出现正确率严重虚高的现象
-现在的麻烦之处可能在于，多标签的acc本身就没有那么可信，他或许是按单标签计算的正确率
-可能acc=0.84意味着真正的正确率约为0.84^3=0.59，而只有acc=98.08%才能到94.35%（恰好和我的记录数据近似）
-所以，请大家多多尝试
+另外注意binary_crossentropy和categorical_crossentropy的区别
+binary_crossentropy是multi-label任务从原理上唯一正确选择，Keras的官方acc无法正常显示，需要自定义
+categorical_crossentropy只会找到三个输出神经元中第一个最大值(1)的地址，所以只会更新最前面的那个，这不正确
+原有acc=0.84意味着真正的正确率约为0.84^3=0.59，而只有acc=98.08%才能接近94.35%
+请大家多多思考，多多尝试，争取搞出点新想法而不是靠玄学来提升准确率
 比如改一改网络的结构或者规模？（模型简单就不要太深，你用ResNet50基本也是这个正确率，梯度会消失的）
 接下来，欢迎大家享受深度玄学调参之旅~~
 welcome to the Beginning of Deep Dark Learning~~
@@ -34,7 +34,7 @@ train_path = "trainTanh.tfrecords"
 
 batch_size = 32
 num_classes = 3
-epochs = 5
+epochs = 8
 num_predictions = 3
 input_shape = (128, 128, 3)
 train_samples = 8000
@@ -217,64 +217,62 @@ def DivResNet(include_top=True, weights='imagenet',
 '''结束
 以上是官网上ResNet50的部分结构函数，直接COPY过来用的
 '''
-
+def multi_pred(y_true, y_pred):
+    acc = tf.floor(K.mean(K.equal(y_true, K.round(y_pred)), axis=-1))
+    return acc
 
 # The data, split between train and test sets:
 # print(imgs_input_fn(train_path).shape)
 x_train, y_train = imgs_input_fn(train_path)
 x_test, y_test = imgs_input_fn(test_path, Batchs=val_samples)
-# x_train, y_train = decode_and_read(train_path)
-# x_test, y_test = decode_and_read(test_path)
+
 print('x_train shape:', x_train.shape)
 print(x_train.shape[0], 'train samples')
 print(x_test.shape[0], 'test samples')
 
 # # Convert class vectors to binary class matrices.
-# y_train = keras.utils.to_categorical(y_train, num_classes)
-# y_test = keras.utils.to_categorical(y_test, num_classes)
 
 # train_inp = Input(tensor=x_train)
 model = DivResNet()
-# model = keras.models.load_model('model5.h5')
-# Let's train the model using RMSprop
-model.compile(loss='categorical_crossentropy',
-              optimizer=Adam(lr=1e-3),
-              metrics=['accuracy'])
+# model = keras.models.load_model('model3.h5', custom_objects={'multi_pred': multi_pred})
+
+model.compile(loss='binary_crossentropy',
+              optimizer=Adam(lr=1e-4),
+              metrics=['accuracy', multi_pred],
+              # callbacks=[keras.callbacks.TensorBoard(log_dir='./log0', histogram_freq=1)],
+              )
 model.summary()
 best_acc = []
 for i in range(epochs):
     model.fit(x_train, y_train,
               batch_size=batch_size,
-              # steps_per_epoch=10000//batch_size,
+              shuffle=True,
               epochs=1,
               # validation_data=(x_test, y_test),
               verbose=1)
     scores = model.evaluate(x_test, y_test, verbose=0)
     print('epoch', i)
     print('Test loss:', scores[0])
-    print('Test accuracy:', scores[1])
-    # if i == 1:
-    #     model.compile(loss='categorical_crossentropy',
-    #                   optimizer=Adam(lr=0.00025),
-    #                   metrics=['accuracy'])
+    print('Test accuracy:', scores[2])
+    best_acc.append((i, {'Multi-acc': scores[2]}))
+    # Save the final model
+    model_json = model.to_json()
+    mdl_save_path = 'model'+str(i)+'.json'
+    with open(mdl_save_path, "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    mdl_save_path = 'model'+str(i)+'.h5'
+    model.save(mdl_save_path)
     if i == 2:
         model.compile(loss='binary_crossentropy',
-                      optimizer=Adam(lr=1e-4),
-                      metrics=['accuracy'])
-    # if i == 3:
-    #     model.compile(loss='categorical_crossentropy',
-    #                   optimizer=Adam(lr=0.00005),
-    #                   metrics=['accuracy'])
-    if i > 0:
-        best_acc.append((i, scores[1]))
-        # Save the final model
-        model_json = model.to_json()
-        mdl_save_path = 'model'+str(i)+'.json'
-        with open(mdl_save_path, "w") as json_file:
-            json_file.write(model_json)
-        # serialize weights to HDF5
-        mdl_save_path = 'model'+str(i)+'.h5'
-        model.save(mdl_save_path)
+                      optimizer=Adam(lr=1e-5),
+                      metrics=['accuracy', multi_pred],
+                      # callbacks=[keras.callbacks.TensorBoard(log_dir='./log1', histogram_freq=1)],
+                      )
+    scores = model.evaluate(x_train, y_train, verbose=0)
+    print('epoch', i)
+    print('Train loss:', scores[0])
+    print('Train accuracy:', scores[2])
 
 print(best_acc)
 # 保存模型
@@ -288,7 +286,7 @@ print(json_string)
 # Score trained model.
 scores = model.evaluate(x_test, y_test, verbose=0)
 print('Test loss:', scores[0])
-print('Test accuracy:', scores[1])
+print('Test accuracy:', scores[2])
 
 # 输出图
 # SVG(model_to_dot(model).create(prog='dot', format='svg'))
