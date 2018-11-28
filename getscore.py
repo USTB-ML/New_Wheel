@@ -1,7 +1,7 @@
 import os
 import csv
 # 该文件用于计算你的预测答案和标答（csv）的差距，即准确率评测。
-# 大家只要改一下csv的名字就好了，调用时直接getscore(src_file,test_file, classes=num_classes)即可
+# 大家只要改一下csv的名字就好了，初赛的话，调用时直接getscore(src_file,test_file)即可
 # 参数说明：
 # src_file：你生成的csv
 # test_file：标准答案csv
