@@ -34,7 +34,7 @@ train_path = "trainTanh.tfrecords"
 
 batch_size = 32
 num_classes = 3
-epochs = 8
+epochs = 5
 num_predictions = 3
 input_shape = (128, 128, 3)
 train_samples = 8000
@@ -237,37 +237,43 @@ model = DivResNet()
 # model = keras.models.load_model('model3.h5', custom_objects={'multi_pred': multi_pred})
 
 model.compile(loss='binary_crossentropy',
-              optimizer=Adam(lr=1e-4),
+              optimizer=keras.optimizers.RMSprop(lr=1e-3, decay=1e-6),
               metrics=['accuracy', multi_pred],
-              # callbacks=[keras.callbacks.TensorBoard(log_dir='./log0', histogram_freq=1)],
               )
 model.summary()
 best_acc = []
+train_acc = []
+
+model_json = model.to_json()
+mdl_save_path = 'modelMini.json'
+with open(mdl_save_path, "w") as json_file:
+    json_file.write(model_json)
+TensorBoard = keras.callbacks.TensorBoard(log_dir='./DivResNet', histogram_freq=1,
+                                          write_images=True)
+CSVLogger = keras.callbacks.CSVLogger('./DivResNet.csv', separator=',', append=True)
+
+
 for i in range(epochs):
-    model.fit(x_train, y_train,
-              batch_size=batch_size,
-              shuffle=True,
-              epochs=1,
-              # validation_data=(x_test, y_test),
-              verbose=1)
+    History = model.fit(x_train, y_train, 
+                        batch_size=batch_size, 
+                        epochs=1, 
+                        shuffle=True,
+                        callbacks=[CSVLogger],
+                        verbose=1)
+    with open('DivHistory.txt', 'w') as f:
+        f.write(str(History.history))
     scores = model.evaluate(x_test, y_test, verbose=0)
     print('epoch', i)
     print('Test loss:', scores[0])
     print('Test accuracy:', scores[2])
     best_acc.append((i, {'Multi-acc': scores[2]}))
     # Save the final model
-    model_json = model.to_json()
-    mdl_save_path = 'model'+str(i)+'.json'
-    with open(mdl_save_path, "w") as json_file:
-        json_file.write(model_json)
-    # serialize weights to HDF5
-    mdl_save_path = 'model'+str(i)+'.h5'
+    mdl_save_path = 'modelMini_'+str(i)+'_'+str(scores[2])+'.h5'
     model.save(mdl_save_path)
-    if i == 2:
+    if i == 1:
         model.compile(loss='binary_crossentropy',
-                      optimizer=Adam(lr=1e-5),
+                      optimizer=keras.optimizers.RMSprop(lr=1e-4, decay=1e-6),
                       metrics=['accuracy', multi_pred],
-                      # callbacks=[keras.callbacks.TensorBoard(log_dir='./log1', histogram_freq=1)],
                       )
     scores = model.evaluate(x_train, y_train, verbose=0)
     print('epoch', i)
