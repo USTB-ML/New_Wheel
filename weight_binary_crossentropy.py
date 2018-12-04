@@ -9,7 +9,7 @@ Keras里没有这个东西，很难受，只能自己写，有可能还有bug，
 def weight_binary_crossentropy(y_true, y_pred):
     _epsilon = tf.convert_to_tensor(1e-7, y_pred.dtype.base_dtype)
     output = tf.clip_by_value(y_pred, _epsilon, 1 - _epsilon)
-    output = tf.log(output / (1 - output))
+    # output = tf.log(output / (1 - output))
     # return K.sum(tf.nn.sigmoid_cross_entropy_with_logits(y_true, output), axis=-1)
     return K.sum(tf.nn.weighted_cross_entropy_with_logits(targets=y_true, logits=output, pos_weight=pos_w), axis=-1)
 
