@@ -11,6 +11,7 @@ This repository is used to store new wheel
 | getscore.py | get_score | 对比预测csv和标答csv之间的差距并评出正确率 | fenghansen | 2018-11-28 |
 | image_2_tfrecords.py | image_2_tfrecords | 将数据集转化为TFrecords文件，加快图片存取速度和稳定性 | fenghansen | 2018-11-26 |
 | multi_pred.py | multi_pred | 支持正确地显示与评测multi-label模型的准确率acc | fenghansen | 2018-11-28 |
+| weight_binary_crossentropy.py | weight_binary_crossentropy | Keras的计算具有权重的sigmoid交叉熵函数 | fenghansen | 2018-12-4 |
 | call_baiduAPI.py | call_baiduAPI_POI | 调用百度地图API查询特定地点经纬度 | Koolo233 | 2018-11-29 |
 | call_baiduAPI.py | call_baiduAPI_POI_batch | 调用百度地图API爬取特定地理范围内满足指定关键字的数据 | Koolo233 | 2018-11-29 |
 
