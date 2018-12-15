@@ -14,6 +14,7 @@ This repository is used to store new wheel
 | weight_binary_crossentropy.py | weight_binary_crossentropy | Keras的计算具有权重的sigmoid交叉熵函数 | fenghansen | 2018-12-4 |
 | call_baiduAPI.py | call_baiduAPI_POI | 调用百度地图API查询特定地点经纬度 | Koolo233 | 2018-11-29 |
 | call_baiduAPI.py | call_baiduAPI_POI_batch | 调用百度地图API爬取特定地理范围内满足指定关键字的数据 | Koolo233 | 2018-11-29 |
+| CAM.py | visualize_class_activation_map | 生成CAM图 | Koolo233 | 2018-12-15 |
 
 
 
